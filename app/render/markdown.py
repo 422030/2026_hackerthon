@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from app.schema import AccessDoc, RenderOptions
 
 
@@ -12,7 +14,7 @@ def to_markdown(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
     s = doc.stats
     out.append(
         f"> 총 {s.pages}쪽. 그림 {s.figures}개, 표 {s.tables}개, "
-        f"수식 {s.formulas}개, 각주 {s.footnotes}개."
+        f"수식 {s.formulas}개."
     )
     out.append("")
 
@@ -20,10 +22,10 @@ def to_markdown(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
         if b.type == "heading":
             out += ["#" * max(2, b.level or 2) + f" {b.text}", ""]
         elif b.type == "paragraph":
-            out += [b.text, ""]
+            out += [re.sub(r"\[\^\d+\]", "", b.text), ""]
         elif b.type == "list":
             mark = "1." if b.list_ordered else "-"
-            out += [f"{mark} {i}" for i in b.list_items] + [""]
+            out += [f"{mark} {re.sub(r'\[\^\d+\]', '', i)}" for i in b.list_items] + [""]
         elif b.type == "page_break":
             out += [f"<!-- {b.text} -->", ""]
         elif b.type == "formula":
@@ -36,13 +38,7 @@ def to_markdown(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
         elif b.type == "table":
             out += _table_md(b) + [""]
         else:
-            out += [b.text, ""]
-
-    if doc.footnotes:
-        out += ["## 각주", ""]
-        for fn in doc.footnotes:
-            out.append(f"[^{fn.global_number}]: {fn.text}")
-        out.append("")
+            out += [re.sub(r"\[\^\d+\]", "", b.text), ""]
 
     if doc.glossary:
         out += ["## 용어·외국어 표기", ""]
