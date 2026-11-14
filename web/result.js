@@ -11,6 +11,7 @@ let playbackRun = 0;
 let segmentStarted = 0;
 let segmentRate = 1;
 let segmentOffsets = [0];
+let announcementRun = 0;
 
 function formatTime(seconds) {
   const whole = Math.floor(seconds);
@@ -138,7 +139,7 @@ function speakFrom(i) {
   if (i >= segments.length) {
     cursor = segments.length;
     stop();
-    say($("speech-status"), "끝까지 읽었습니다.");
+    speakFeedback("끝까지 읽었습니다.");
     return;
   }
   const run = ++playbackRun;
@@ -171,18 +172,34 @@ function highlight(blockId) {
   }
 }
 
+// 안내를 읽은 뒤 재생 중이었다면 현재 단락부터 이어 읽는다.
+function speakFeedback(message, resume = false) {
+  say($("speech-status"), message);
+  if (!("speechSynthesis" in window)) return;
+  const token = ++announcementRun;
+  playbackRun++;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.lang = "ko-KR";
+  utterance.rate = 1;
+  utterance.onend = () => {
+    if (token === announcementRun && resume && playing) speakFrom(cursor);
+  };
+  speechSynthesis.speak(utterance);
+}
+
 function start() {
   if (!segments.length || !("speechSynthesis" in window)) return;
   speechSynthesis.cancel();
   if (cursor >= segments.length) cursor = 0;
   playing = true;
   $("play").setAttribute("aria-pressed", "true");
-  say($("speech-status"), "읽기를 시작합니다.");
-  speakFrom(cursor);
+  speakFeedback("읽기를 시작합니다.", true);
 }
 
 function stop() {
   playing = false;
+  announcementRun++;
   playbackRun++;
   speechSynthesis.cancel();
   updatePlaybackProgress();
@@ -192,7 +209,7 @@ function stop() {
 function togglePlayback() {
   if (playing) {
     stop();
-    say($("speech-status"), "일시정지했습니다.");
+    speakFeedback("일시정지했습니다.");
   } else {
     start();
   }
@@ -211,12 +228,11 @@ function moveParagraph(delta) {
   const next = Math.max(0, Math.min(segments.length - 1, cursor + delta));
   const atFirst = delta < 0 && cursor === 0;
   cursor = next;
-  if (playing) speakFrom(cursor);
-  else highlight(segments[cursor]?.block_id);
+  highlight(segments[cursor]?.block_id);
   updatePlaybackProgress();
-  say($("speech-status"), atFirst
+  speakFeedback(atFirst
     ? "첫 단락입니다."
-    : `전체 ${segments.length}개 중 ${cursor + 1}번째.`);
+    : `전체 ${segments.length}개 중 ${cursor + 1}번째.`, playing);
 }
 
 $("prev").addEventListener("click", () => moveParagraph(-1));
@@ -226,13 +242,8 @@ function setRate(rate) {
   const value = Math.max(0.5, Math.min(2.5, Math.round(rate * 10) / 10));
   $("rate").value = value.toFixed(1);
   $("rate-out").textContent = `${value.toFixed(1)}배`;
-  say($("speech-status"), `${value.toFixed(1)}배.`);
   updatePlaybackProgress();
-  if (playing) {
-    playbackRun++;
-    speechSynthesis.cancel();
-    speakFrom(cursor);
-  }
+  speakFeedback(`${value.toFixed(1)}배.`, playing);
 }
 
 $("rate").addEventListener("input", (e) => setRate(Number(e.target.value)));
@@ -241,13 +252,7 @@ $("rate").addEventListener("input", (e) => setRate(Number(e.target.value)));
 const SHORTCUT_HELP = "단축키 안내. 스페이스 재생 또는 일시정지. 오른쪽 화살표 다음 단락. 왼쪽 화살표 이전 단락. 위쪽 화살표 속도 증가. 아래쪽 화살표 속도 감소. 홈 처음부터. 물음표 단축키 안내. 이스케이프 재생 종료.";
 
 function announceHelp() {
-  say($("speech-status"), SHORTCUT_HELP);
-  if (!("speechSynthesis" in window)) return;
-  // 교재 읽기를 잠시 중단하고 안내를 재생한다.
-  stop();
-  const utterance = new SpeechSynthesisUtterance(SHORTCUT_HELP);
-  utterance.lang = "ko-KR";
-  speechSynthesis.speak(utterance);
+  speakFeedback(SHORTCUT_HELP, playing);
 }
 
 document.addEventListener("keydown", (event) => {
@@ -288,12 +293,9 @@ document.addEventListener("keydown", (event) => {
       playbackRun++;
       if ("speechSynthesis" in window) speechSynthesis.cancel();
       cursor = 0;
-      if (playing) speakFrom(0);
-      else {
-        highlight(segments[0]?.block_id);
-        updatePlaybackProgress();
-      }
-      say($("speech-status"), "첫 단락으로 이동했습니다.");
+      highlight(segments[0]?.block_id);
+      updatePlaybackProgress();
+      speakFeedback("첫 단락으로 이동했습니다.", playing);
       break;
     case "?":
       event.preventDefault();
@@ -303,7 +305,7 @@ document.addEventListener("keydown", (event) => {
       if (playing || ("speechSynthesis" in window && speechSynthesis.speaking)) {
         event.preventDefault();
         stop();
-        say($("speech-status"), "음성 재생을 종료했습니다.");
+        speakFeedback("음성 재생을 종료했습니다.");
       }
       break;
   }
