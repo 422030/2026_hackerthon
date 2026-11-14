@@ -172,7 +172,8 @@ function highlight(blockId) {
 }
 
 function start() {
-  if (!segments.length) return;
+  if (!segments.length || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
   if (cursor >= segments.length) cursor = 0;
   playing = true;
   $("play").setAttribute("aria-pressed", "true");
@@ -188,14 +189,16 @@ function stop() {
   $("play").setAttribute("aria-pressed", "false");
 }
 
-$("play").addEventListener("click", () => {
+function togglePlayback() {
   if (playing) {
     stop();
     say($("speech-status"), "일시정지했습니다.");
   } else {
     start();
   }
-});
+}
+
+$("play").addEventListener("click", togglePlayback);
 
 $("prev").addEventListener("click", () => {
   if (!segments.length) return;
@@ -217,9 +220,86 @@ $("next").addEventListener("click", () => {
   updatePlaybackProgress();
 });
 
-$("rate").addEventListener("input", (e) => {
-  $("rate-out").textContent = `${e.target.value}배`;
+function setRate(rate) {
+  const value = Math.max(0.5, Math.min(2.5, Math.round(rate * 10) / 10));
+  $("rate").value = value.toFixed(1);
+  $("rate-out").textContent = `${value.toFixed(1)}배`;
   updatePlaybackProgress();
+  if (playing) {
+    playbackRun++;
+    speechSynthesis.cancel();
+    speakFrom(cursor);
+  }
+}
+
+$("rate").addEventListener("input", (e) => setRate(Number(e.target.value)));
+
+// 결과 화면의 키보드 음성 재생 조작. 폼 요소와 버튼의 기본 키 동작은 유지한다.
+const SHORTCUT_HELP = "단축키 안내. 스페이스 재생 또는 일시정지. 오른쪽 화살표 다음 단락. 왼쪽 화살표 이전 단락. 위쪽 화살표 속도 증가. 아래쪽 화살표 속도 감소. 홈 처음부터. 물음표 단축키 안내. 이스케이프 재생 종료.";
+
+function announceHelp() {
+  say($("speech-status"), SHORTCUT_HELP);
+  if (!("speechSynthesis" in window)) return;
+  // 교재 읽기를 잠시 중단하고 안내를 재생한다.
+  stop();
+  const utterance = new SpeechSynthesisUtterance(SHORTCUT_HELP);
+  utterance.lang = "ko-KR";
+  speechSynthesis.speak(utterance);
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+  if ($("panel-read").hidden) return;
+  const target = event.target;
+  if (target instanceof Element &&
+      (target.closest("input, textarea, select, button, a, [contenteditable], [role='button']"))) return;
+  if (!segments.length && event.key !== "?") return;
+
+  switch (event.key) {
+    case " ":
+    case "Spacebar":
+      event.preventDefault();
+      togglePlayback();
+      break;
+    case "ArrowRight":
+      event.preventDefault();
+      $("next").click();
+      break;
+    case "ArrowLeft":
+      event.preventDefault();
+      $("prev").click();
+      break;
+    case "ArrowUp":
+      event.preventDefault();
+      setRate(Number($("rate").value) + 0.1);
+      break;
+    case "ArrowDown":
+      event.preventDefault();
+      setRate(Number($("rate").value) - 0.1);
+      break;
+    case "Home":
+      event.preventDefault();
+      playbackRun++;
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+      cursor = 0;
+      if (playing) speakFrom(0);
+      else {
+        highlight(segments[0]?.block_id);
+        updatePlaybackProgress();
+      }
+      break;
+    case "?":
+      event.preventDefault();
+      announceHelp();
+      break;
+    case "Escape":
+      if (playing || ("speechSynthesis" in window && speechSynthesis.speaking)) {
+        event.preventDefault();
+        stop();
+        say($("speech-status"), "음성 재생을 종료했습니다.");
+      }
+      break;
+  }
 });
 
 // ── 탭 ─────────────────────────────────────────────────
