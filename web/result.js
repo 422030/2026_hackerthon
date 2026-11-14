@@ -7,6 +7,27 @@ const job = new URLSearchParams(location.search).get("job");
 let segments = [];
 let cursor = 0;
 let playing = false;
+let playbackRun = 0;
+let segmentStarted = 0;
+let segmentRate = 1;
+let segmentOffsets = [0];
+
+function formatTime(seconds) {
+  const whole = Math.floor(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+function updatePlaybackProgress() {
+  const total = segmentOffsets.at(-1);
+  const start = segmentOffsets[cursor] ?? 0;
+  const end = segmentOffsets[cursor + 1] ?? start;
+  const position = playing
+    ? Math.min(end, start + (performance.now() - segmentStarted) / 1000 * segmentRate)
+    : start;
+  const rate = Number($("rate").value);
+  $("audio-progress").value = total ? position / total : 0;
+  say($("audio-time"), `${formatTime(position / rate)} / ${formatTime(total / rate)} (예상)`);
+}
 
 function say(el, text) {
   if (el.textContent !== text) el.textContent = text;
@@ -46,6 +67,12 @@ async function load() {
   $("doc").insertAdjacentHTML("beforeend", html);
 
   segments = await (await fetch(`/api/jobs/${job}/speech`)).json();
+
+  for (const segment of segments) {
+    const duration = Math.max(.5, Array.from(segment.text).length / 6);
+    segmentOffsets.push(segmentOffsets.at(-1) + duration + (segment.pause_ms_after || 0) / 1000);
+  }
+  updatePlaybackProgress();
 
   $("dl-md").href = `/api/jobs/${job}/markdown`;
   $("dl-md").download = downloadName(doc, "md");
@@ -109,20 +136,25 @@ async function pollRetry() {
 
 function speakFrom(i) {
   if (i >= segments.length) {
+    cursor = segments.length;
     stop();
     say($("speech-status"), "끝까지 읽었습니다.");
     return;
   }
+  const run = ++playbackRun;
   cursor = i;
+  segmentStarted = performance.now();
+  segmentRate = Number($("rate").value);
+  updatePlaybackProgress();
   highlight(segments[i].block_id);
 
   const u = new SpeechSynthesisUtterance(segments[i].text);
   u.lang = segments[i].lang || "ko-KR";
-  u.rate = parseFloat($("rate").value);
+  u.rate = segmentRate;
   u.onend = () => {
-    if (!playing) return;
+    if (!playing || run !== playbackRun) return;
     const wait = segments[i].pause_ms_after || 0;
-    setTimeout(() => playing && speakFrom(i + 1), wait);
+    setTimeout(() => playing && run === playbackRun && speakFrom(i + 1), wait);
   };
   speechSynthesis.speak(u);
 }
@@ -141,6 +173,7 @@ function highlight(blockId) {
 
 function start() {
   if (!segments.length) return;
+  if (cursor >= segments.length) cursor = 0;
   playing = true;
   $("play").setAttribute("aria-pressed", "true");
   say($("speech-status"), "읽기를 시작합니다.");
@@ -149,7 +182,9 @@ function start() {
 
 function stop() {
   playing = false;
+  playbackRun++;
   speechSynthesis.cancel();
+  updatePlaybackProgress();
   $("play").setAttribute("aria-pressed", "false");
 }
 
@@ -163,21 +198,28 @@ $("play").addEventListener("click", () => {
 });
 
 $("prev").addEventListener("click", () => {
+  if (!segments.length) return;
+  playbackRun++;
   speechSynthesis.cancel();
   cursor = Math.max(0, cursor - 1);
   if (playing) speakFrom(cursor);
   else highlight(segments[cursor]?.block_id);
+  updatePlaybackProgress();
 });
 
 $("next").addEventListener("click", () => {
+  if (!segments.length) return;
+  playbackRun++;
   speechSynthesis.cancel();
   cursor = Math.min(segments.length - 1, cursor + 1);
   if (playing) speakFrom(cursor);
   else highlight(segments[cursor]?.block_id);
+  updatePlaybackProgress();
 });
 
 $("rate").addEventListener("input", (e) => {
   $("rate-out").textContent = `${e.target.value}배`;
+  updatePlaybackProgress();
 });
 
 // ── 탭 ─────────────────────────────────────────────────
@@ -190,4 +232,5 @@ $("tab-compare").addEventListener("click", (event) => {
   $("panel-compare").hidden = !showComparison;
 });
 
+setInterval(() => { if (playing) updatePlaybackProgress(); }, 250);
 load();
