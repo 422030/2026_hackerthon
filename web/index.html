@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>전공 교재 접근성 변환기</title>
 <link rel="stylesheet" href="/web/a11y.css">
+<style>
+#conversion-panel { text-align: center; margin-block: 2rem 1rem; }
+#conversion-title { margin-top: 0; }
+#stop { background: #b42332; color: #fff; border: 1px solid #b42332; padding: 4px 12px; font-size: .9rem; }
+#stop:focus-visible { outline-color: var(--fg); }
+#progress:empty { border: 0; padding: 0; margin: 0; }
+</style>
 </head>
 <body>
 
@@ -80,13 +87,16 @@
     <h2>변환 시작</h2>
     <p>
       <button type="submit" id="start">변환 시작</button>
-      <button type="button" id="stop" hidden>변환 중단</button>
     </p>
-    <div id="progress" role="status"></div>
-    <div id="error" role="alert" hidden></div>
   </section>
 
 </form>
+<section id="conversion-panel" aria-labelledby="conversion-title" hidden>
+  <h2 id="conversion-title" tabindex="-1">문서를 변환 중입니다</h2>
+  <button type="button" id="stop">변환 중단</button>
+</section>
+<div id="progress" role="status"></div>
+<div id="error" role="alert" hidden></div>
 </main>
 
 <script src="/web/upload.js" type="module"></script>
