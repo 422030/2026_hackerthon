@@ -1,0 +1,71 @@
+{
+  "page_no": 13,
+  "page_sha1": "fixture0000000000000000000000000000000002",
+  "source": "degraded",
+  "model_id": "fixture",
+  "prompt_version": "fixture",
+  "column_count": 1,
+  "page_kind": "body",
+  "blocks": [
+    {
+      "id": "p13-b00", "type": "running_head", "page_no": 13, "order": 0,
+      "text": "제3장 확률변수", "text_source": "ocr", "confidence": 1.0
+    },
+    {
+      "id": "p13-b01", "type": "paragraph", "page_no": 13, "order": 1,
+      "text": "연속확률변수는 치역이 실수 구간인 경우이다.",
+      "text_source": "ocr", "starts_mid_sentence": true, "confidence": 0.9
+    },
+    {
+      "id": "p13-b02", "type": "heading", "page_no": 13, "order": 2, "level": 2,
+      "text": "3.2 표본의 구성", "text_source": "ocr", "confidence": 1.0
+    },
+    {
+      "id": "p13-b03", "type": "paragraph", "page_no": 13, "order": 3,
+      "text": "조사에 사용된 표본은 지역별로 다음과 같이 배분되었다.[^1]",
+      "text_source": "ocr", "confidence": 0.95
+    },
+    {
+      "id": "p13-b04", "type": "table", "page_no": 13, "order": 4,
+      "text": "표 3-1. 지역별 표본 수",
+      "alt_short": "지역별 표본 수와 비율을 비교하는 표",
+      "table_grid": [
+        [
+          {"text": "지역", "is_header": true, "header_axis": "col"},
+          {"text": "표본 수", "is_header": true, "header_axis": "col"},
+          {"text": "비율", "is_header": true, "header_axis": "col"}
+        ],
+        [
+          {"text": "서울", "is_header": true, "header_axis": "row"},
+          {"text": "412"}, {"text": "34.3%"}
+        ],
+        [
+          {"text": "경기", "is_header": true, "header_axis": "row"},
+          {"text": "388"}, {"text": "32.3%"}
+        ],
+        [
+          {"text": "그 외", "is_header": true, "header_axis": "row"},
+          {"text": "400"}, {"text": "33.3%"}
+        ]
+      ],
+      "confidence": 0.93
+    },
+    {
+      "id": "p13-b05", "type": "figure", "page_no": 13, "order": 5,
+      "figure_kind": "unreadable",
+      "alt_short": "설명을 생성하지 못한 그림",
+      "text": "그림 3-3. 조사 절차",
+      "confidence": 0.2,
+      "flags": ["llm_degraded"],
+      "note": "해상도가 낮아 판독 불가"
+    },
+    {
+      "id": "p13-b08", "type": "footnote", "page_no": 13, "order": 8,
+      "marker": "1", "footnote_scope": "page",
+      "text": "표본 추출은 2024년 3월에 이루어졌다.",
+      "ref_block_ids": ["p13-b03"], "ref_char_offset": 24, "confidence": 1.0
+    }
+  ],
+  "terms": [],
+  "warnings": ["13쪽 그림 하나는 설명을 생성하지 못했습니다."]
+}

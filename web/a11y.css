@@ -1,0 +1,95 @@
+/* 공통 스타일. 접근성 규칙이 여기 들어 있다. outline 을 지우지 않는다. */
+
+:root {
+  --bg: #fff; --fg: #111; --muted: #555; --line: #ccc;
+  --accent: #0b5fff; --warn: #b00020; --ok: #0a6a3a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --fg: #eceff3; --muted: #aab; --line: #444;
+    --accent: #7aa7ff; --warn: #ff7b8a; --ok: #5fd39b;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg); color: var(--fg);
+  margin: 0 auto; padding: 16px; max-width: 70ch;
+  font-family: system-ui, "Malgun Gothic", sans-serif;
+  font-size: 1.05rem; line-height: 1.8;
+}
+
+h1 { font-size: 1.7rem; }
+h2 { font-size: 1.35rem; margin-top: 2em; }
+h3 { font-size: 1.12rem; }
+
+a { color: var(--accent); }
+
+/* 포커스 표시를 절대 지우지 않는다 */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
+  outline: 3px solid currentColor; outline-offset: 2px;
+}
+
+/* 화면에서 숨기되 스크린리더는 읽는다. display:none 을 쓰지 않는다 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+.skip { position: absolute; left: -9999px; }
+.skip:focus {
+  position: static; display: inline-block; padding: 8px;
+  border: 2px solid currentColor; background: var(--bg);
+}
+
+button, .btn {
+  font: inherit; min-height: 44px; padding: 8px 16px;
+  background: var(--bg); color: var(--fg);
+  border: 2px solid currentColor; border-radius: 6px; cursor: pointer;
+}
+button[disabled] { opacity: 0.6; cursor: default; }
+
+input, select { font: inherit; padding: 8px; min-height: 44px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--fg); }
+
+fieldset { border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 16px; margin: 1.2em 0; }
+legend { font-weight: bold; padding: 0 6px; }
+
+.hint { color: var(--muted); font-size: 0.95rem; }
+
+[role="status"], [role="alert"] {
+  margin: 1em 0; padding: 12px 16px; border: 1px solid var(--line);
+  border-radius: 6px;
+}
+[role="alert"] { border-color: var(--warn); }
+
+figure { margin: 1.6em 0; padding: 12px; border: 1px solid var(--line); }
+figcaption { font-weight: bold; margin-top: 8px; }
+.long-desc { margin-top: 8px; font-size: 0.97rem; }
+.figure-placeholder {
+  border: 1px dashed var(--line); min-height: 120px;
+}
+
+[role="math"] {
+  padding: 12px; border-left: 4px solid var(--line);
+  margin: 1.5em 0; font-size: 1.15rem;
+}
+
+table { border-collapse: collapse; width: 100%; margin: 1.5em 0; }
+th, td { border: 1px solid var(--line); padding: 8px; text-align: left; }
+caption { text-align: left; font-weight: bold; padding-bottom: 6px; }
+
+.pagebreak { border: 0; border-top: 2px dashed var(--line); margin: 2.5em 0; }
+
+/* 색만으로 전달하지 않는다. 테두리를 같이 쓴다 */
+[data-flag="verify"] { border-left: 3px dashed var(--warn); padding-left: 10px; }
+.verify { color: var(--warn); }
+.reading { background: rgba(127,127,127,0.15); border-left: 4px solid var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

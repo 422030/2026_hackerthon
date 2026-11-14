@@ -1,0 +1,59 @@
+{
+  "page_no": 12,
+  "page_sha1": "fixture0000000000000000000000000000000001",
+  "source": "degraded",
+  "model_id": "fixture",
+  "prompt_version": "fixture",
+  "column_count": 1,
+  "page_kind": "body",
+  "blocks": [
+    {
+      "id": "p12-b00", "type": "running_head", "page_no": 12, "order": 0,
+      "text": "제3장 확률변수", "text_source": "ocr", "confidence": 1.0
+    },
+    {
+      "id": "p12-b01", "type": "heading", "page_no": 12, "order": 1, "level": 2,
+      "text": "3.1 확률변수의 정의", "text_source": "ocr", "confidence": 1.0
+    },
+    {
+      "id": "p12-b02", "type": "paragraph", "page_no": 12, "order": 2,
+      "text": "확률변수(random variable)[^1]란 표본공간의 각 원소에 실수를 대응시키는 함수이다. 변수라는 이름과 달리 실제로는 함수이며, 이 점이 초심자에게 흔한 혼동의 원인이 된다.",
+      "text_source": "mixed", "confidence": 0.9
+    },
+    {
+      "id": "p12-b03", "type": "formula", "page_no": 12, "order": 3,
+      "latex": "X : \\Omega \\rightarrow \\mathbb{R}",
+      "speech": "엑스 는 오메가 에서 실수 집합 알 로 가는 함수이다",
+      "formula_label": "(3.1)", "confidence": 0.95
+    },
+    {
+      "id": "p12-b04", "type": "figure", "page_no": 12, "order": 4,
+      "figure_kind": "line",
+      "alt_short": "연도별 청년 실업률 변화를 보여주는 꺾은선그래프",
+      "alt_long": "가로축은 1990년부터 2020년까지 5년 간격의 연도이고, 세로축은 실업률로 0에서 12퍼센트까지 2퍼센트 간격으로 표시되어 있다. 선은 1998년과 2008년에 두 번 뚜렷하게 솟아오르며, 두 봉우리 사이에서는 완만하게 내려간다. 2020년 값이 전체 구간에서 가장 높다.",
+      "data_points": [{"label": "2008", "value": "9.4", "unit": "%"}],
+      "text": "그림 3-2. 연도별 청년 실업률",
+      "confidence": 0.8
+    },
+    {
+      "id": "p12-b05", "type": "paragraph", "page_no": 12, "order": 5,
+      "text": "확률변수는 치역의 성질에 따라 이산확률변수와 연속확률변수로 구분한다. 이산확률변수는 치역이 가산집합인 경우이고,",
+      "text_source": "ocr", "ends_mid_sentence": true, "confidence": 0.92
+    },
+    {
+      "id": "p12-b09", "type": "footnote", "page_no": 12, "order": 9,
+      "marker": "1", "footnote_scope": "page",
+      "text": "김철수(2019), 통계학의 기초, 한빛출판, 42쪽.",
+      "ref_block_ids": ["p12-b02"], "ref_char_offset": 11, "confidence": 1.0
+    }
+  ],
+  "terms": [
+    {
+      "id": "p12-t00", "type": "term", "page_no": 12, "order": 0,
+      "surface": "random variable", "reading": "랜덤 베리어블",
+      "gloss": "표본공간의 원소에 실수를 대응시키는 함수.", "lang": "en",
+      "confidence": 1.0
+    }
+  ],
+  "warnings": []
+}

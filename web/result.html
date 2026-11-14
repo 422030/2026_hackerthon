@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>변환 결과 — 전공 교재 접근성 변환기</title>
+<link rel="stylesheet" href="/web/a11y.css">
+<style>
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+             border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+  .tabs { display: flex; gap: 8px; margin: 1.5em 0 0; padding: 0; }
+  .tabs button[aria-selected="true"] { border-width: 3px; font-weight: bold; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+  pre { white-space: pre-wrap; word-break: break-all; font-size: 0.92rem;
+        border: 1px solid var(--line); padding: 12px; }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#doc">본문 바로가기</a>
+
+<header>
+  <h1 id="doc-title">변환 결과</h1>
+  <p id="doc-summary" role="status">불러오는 중입니다.</p>
+  <p><a href="/library.html">보관함</a> · <a href="/">새로 변환하기</a></p>
+
+  <div id="retry-box" role="group" aria-labelledby="retry-msg" hidden>
+    <p id="retry-msg"></p>
+    <p><button type="button" id="retry">실패한 쪽만 다시 변환</button></p>
+    <p id="retry-status" role="status"></p>
+  </div>
+</header>
+
+<nav aria-label="보기 전환">
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-read" aria-controls="panel-read" aria-selected="true">읽기</button>
+    <button role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false" tabindex="-1">일반 OCR과 비교</button>
+  </div>
+</nav>
+
+<main>
+
+<section id="panel-read" role="tabpanel" aria-labelledby="tab-read" tabindex="0">
+  <h2 class="sr-only">읽기</h2>
+
+  <div class="toolbar" role="toolbar" aria-label="읽기 도구">
+    <button id="play" aria-pressed="false">읽어주기 시작</button>
+    <button id="prev">이전 단락</button>
+    <button id="next">다음 단락</button>
+    <label for="rate">읽기 속도</label>
+    <input type="range" id="rate" min="0.5" max="2.5" step="0.1" value="1.1">
+    <output for="rate" id="rate-out">1.1배</output>
+    <a id="dl-html" href="#">HTML 내려받기</a>
+    <a id="dl-md" href="#">마크다운 내려받기</a>
+  </div>
+  <p id="speech-status" role="status"></p>
+
+  <article id="doc" lang="ko"></article>
+</section>
+
+<section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
+  <h2>일반 OCR과 비교</h2>
+  <div class="compare">
+    <section>
+      <h3>일반 OCR 결과</h3>
+      <p class="hint">구조 정보 없음. 도표 설명 없음.</p>
+      <pre id="baseline">불러오는 중</pre>
+    </section>
+    <section>
+      <h3>본 시스템 결과</h3>
+      <p class="hint" id="ours-summary"></p>
+      <pre id="ours">불러오는 중</pre>
+    </section>
+  </div>
+</section>
+
+</main>
+
+<script src="/web/result.js" type="module"></script>
+</body>
+</html>

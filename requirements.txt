@@ -1,0 +1,22 @@
+# 배포 대상 런타임은 64비트 파이썬 3.11 이상.
+# 전부 무료이고 CPU 에서 돈다. GPU 가 필요한 패키지는 넣지 않는다.
+
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+python-multipart==0.0.20
+pydantic==2.11.7
+
+# PDF -> 이미지, 텍스트층 추출. poppler 바이너리가 필요 없다.
+pymupdf==1.26.3
+
+# OCR. Tesseract 본체는 별도 설치 필요 (UB-Mannheim 배포판 + kor traineddata)
+pytesseract==0.3.13
+pillow==11.3.0
+opencv-python-headless==4.11.0.86
+
+# LLM 호출
+anthropic==0.69.0
+
+# 평가
+jiwer==3.1.0
+google-genai==1.46.0
