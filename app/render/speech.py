@@ -102,8 +102,10 @@ def to_speech_text(
                     300,
                 )
         elif b.type == "table":
-            add(b.id, "table", f"표. {b.alt_short or b.text}", 200)
-            for row in b.table_grid or []:
-                add(b.id, "table", ", ".join(c.text for c in row if c.text), 100)
+            add(b.id, "table", f"표. {b.alt_short or b.text or '표의 내용을 설명합니다.'}", 200)
+            if b.alt_long:
+                add(b.id, "table", b.alt_long, 300)
+            else:
+                add(b.id, "table", "표의 핵심 내용을 분석하지 못했습니다.", 300)
 
     return segs
