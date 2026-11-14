@@ -6,12 +6,9 @@
 
 from __future__ import annotations
 
-import html
-import re
 import shutil
 import threading
 from pathlib import Path
-from urllib.parse import quote
 
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
@@ -20,7 +17,6 @@ from fastapi.staticfiles import StaticFiles
 from app import db, jobs
 from app.llm import adapter
 from app.render import html as html_render
-from app.render import markdown as md_render
 from app.render import speech as speech_render
 from app.schema import RenderOptions
 
@@ -131,72 +127,12 @@ def job_html(job_id: str, footnote_mode: str = "end") -> HTMLResponse:
     return HTMLResponse(html_render.to_html(doc, opts))
 
 
-@app.get("/api/jobs/{job_id}/download.html", response_class=HTMLResponse)
-def job_html_file(job_id: str, footnote_mode: str = "end") -> HTMLResponse:
-    """내려받는 HTML. 혼자서 열리는 완성된 문서다.
-
-    화면용 조각과 달리 문자 인코딩 선언과 스타일을 안에 담는다.
-    받은 파일을 그대로 스크린리더로 열기 때문에 바깥에 기대는 것이 없어야 한다.
-    """
-    doc = jobs.get_doc(job_id)
-    if doc is None:
-        return HTMLResponse("<p>아직 준비되지 않았습니다.</p>", status_code=404)
-
-    opts = RenderOptions(footnote_mode=footnote_mode)  # type: ignore[arg-type]
-    css = (WEB_DIR / "a11y.css").read_text(encoding="utf-8")
-    body = html_render.to_html(doc, opts)
-    title = doc.title or Path(doc.source_filename).stem
-
-    page = (
-        "<!doctype html>\n"
-        '<html lang="ko">\n<head>\n'
-        '<meta charset="utf-8">\n'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"<title>{html.escape(title)}</title>\n"
-        f"<style>\n{css}\n</style>\n"
-        "</head>\n<body>\n"
-        f"{body}\n"
-        "</body>\n</html>\n"
-    )
-    return HTMLResponse(page, headers=_disposition(download_name(doc, "html")))
-
-
 @app.get("/api/jobs/{job_id}/speech")
 def job_speech(job_id: str) -> JSONResponse:
     doc = jobs.get_doc(job_id)
     if doc is None:
         return JSONResponse({"error": "not ready"}, status_code=404)
     return JSONResponse([s.model_dump() for s in speech_render.to_speech_text(doc)])
-
-
-def download_name(doc, ext: str) -> str:
-    """내려받는 파일 이름. 책이름_시작쪽-끝쪽.
-
-    여러 범위를 내려받아도 서로 구분되어야 한다.
-    파일 이름에 쓸 수 없는 글자는 밑줄로 바꾼다.
-    """
-    stem = Path(doc.source_filename or "교재").stem
-    while Path(stem).suffix:  # '....pdf.pdf' 처럼 확장자가 겹친 경우
-        stem = Path(stem).stem
-    stem = re.sub(r'[\\/:*?"<>|]+', "_", stem).strip() or "교재"
-    first, last = doc.page_range
-    return f"{stem}_{first}-{last}.{ext}"
-
-
-def _disposition(name: str) -> dict[str, str]:
-    """한글 파일 이름은 그대로 못 싣는다. RFC 5987 형식을 같이 보낸다."""
-    quoted = quote(name, safe="")
-    return {"Content-Disposition": f"attachment; filename*=UTF-8''{quoted}"}
-
-
-@app.get("/api/jobs/{job_id}/markdown", response_class=PlainTextResponse)
-def job_markdown(job_id: str) -> PlainTextResponse:
-    doc = jobs.get_doc(job_id)
-    if doc is None:
-        return PlainTextResponse("아직 준비되지 않았습니다.", status_code=404)
-    return PlainTextResponse(
-        md_render.to_markdown(doc), headers=_disposition(download_name(doc, "md"))
-    )
 
 
 @app.get("/api/jobs/{job_id}/baseline", response_class=PlainTextResponse)

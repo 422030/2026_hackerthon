@@ -34,14 +34,6 @@ function say(el, text) {
   if (el.textContent !== text) el.textContent = text;
 }
 
-/** 내려받는 파일 이름. 책이름_시작쪽-끝쪽. 서버가 보내는 이름과 같은 규칙이다. */
-function downloadName(doc, ext) {
-  let stem = String(doc.source_filename || "교재").replace(/(\.[^.]+)+$/, "");
-  stem = stem.replace(/[\\/:*?"<>|]+/g, "_").trim() || "교재";
-  const [first, last] = doc.page_range || [1, 1];
-  return `${stem}_${first}-${last}.${ext}`;
-}
-
 async function load() {
   if (!job) {
     say($("doc-summary"), "job 값이 없습니다. 업로드 화면에서 다시 시작해 주세요.");
@@ -75,10 +67,6 @@ async function load() {
   }
   updatePlaybackProgress();
 
-  $("dl-md").href = `/api/jobs/${job}/markdown`;
-  $("dl-md").download = downloadName(doc, "md");
-  $("dl-html").href = `/api/jobs/${job}/download.html`;
-  $("dl-html").download = downloadName(doc, "html");
 
   $("baseline").textContent =
     (await (await fetch(`/api/jobs/${job}/baseline`)).text()) || "(없음)";
