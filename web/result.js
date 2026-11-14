@@ -33,9 +33,9 @@ async function load() {
   const s = doc.stats || {};
   let summary =
     `총 ${s.pages || 0}쪽. 그림 ${s.figures || 0}개, 표 ${s.tables || 0}개, ` +
-    `수식 ${s.formulas || 0}개, 각주 ${s.footnotes || 0}개.`;
+    `수식 ${s.formulas || 0}개.`;
   if ((doc.degraded_pages || []).length) {
-    summary += ` ${doc.degraded_pages.join(", ")}쪽은 오프라인으로 처리되어 그림 설명이 없습니다.`;
+    summary += ` ${doc.degraded_pages.join(", ")}쪽은 AI 설명을 생성하지 못했습니다.`;
   }
   say($("doc-summary"), summary);
   showRetry(doc.degraded_pages || []);
