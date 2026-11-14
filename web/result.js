@@ -259,9 +259,9 @@ function setRate(rate) {
 $("rate").addEventListener("input", (e) => setRate(Number(e.target.value)));
 
 // 결과 화면의 키보드 음성 재생 조작. 폼 요소와 버튼의 기본 키 동작은 유지한다.
-const SHORTCUT_HELP = "단축키 안내. 스페이스 재생 또는 일시정지. 오른쪽 화살표 다음 단락. 왼쪽 화살표 이전 단락. 위쪽 화살표 속도 증가. 아래쪽 화살표 속도 감소. 홈 처음부터. 물음표 단축키 안내. 이스케이프 재생 종료.";
+const SHORTCUT_HELP = "사용방법. 스페이스는 재생과 일시정지. 왼쪽과 오른쪽 화살표는 단락 이동. 위쪽과 아래쪽 화살표는 속도 조절. 숫자 영은 사용법 듣기. 이스케이프는 종료.";
 
-const SHORTCUT_HINT = "물음표를 누르면 사용법을 들을 수 있습니다.";
+const SHORTCUT_HINT = "숫자 영을 누르면 사용법을 들을 수 있습니다.";
 let hintAnnounced = false;
 
 // 결과 화면에 들어오자마자 단축키가 있다는 것부터 알린다.
@@ -280,7 +280,10 @@ function announceShortcutHint() {
   setTimeout(() => {
     if (hintAnnounced) return;
     // 교재를 읽는 중이면 끊지 않는다.
-    const retry = () => { if (!playing) announceShortcutHint(); };
+    const retry = () => {
+      if (playing || speechSynthesis.speaking || speechSynthesis.pending) return;
+      announceShortcutHint();
+    };
     document.addEventListener("keydown", retry, { once: true });
     document.addEventListener("click", retry, { once: true });
   }, 1200);
@@ -332,6 +335,7 @@ document.addEventListener("keydown", (event) => {
       updatePlaybackProgress();
       speakFeedback("첫 단락으로 이동했습니다.", playing);
       break;
+    case "0":
     case "?":
       event.preventDefault();
       announceHelp();
