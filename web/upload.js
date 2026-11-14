@@ -48,13 +48,9 @@ function say(el, text) {
   el.textContent = text;
 }
 
-/** 체크했을 때만 소리로 읽는다.
- *
- * 안내문은 role="status" 라서 스크린리더가 이미 읽는다. 여기서 또 읽으면
- * 같은 문장이 두 번 들린다. 스크린리더를 쓰지 않는 사용자를 위한 선택지다.
- */
+/** 변환 상태를 음성으로 안내한다. */
 function speak(text) {
-  if (!$("speak").checked || !("speechSynthesis" in window)) return;
+  if (!("speechSynthesis" in window)) return;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -64,20 +60,6 @@ function speak(text) {
     /* 음성 엔진이 없는 환경 */
   }
 }
-
-try {
-  $("speak").checked = localStorage.getItem("speak") === "1";
-} catch {
-  /* 저장소를 못 쓰는 환경 */
-}
-$("speak").addEventListener("change", (e) => {
-  try {
-    localStorage.setItem("speak", e.target.checked ? "1" : "0");
-  } catch {
-    /* 저장소를 못 쓰는 환경 */
-  }
-  if (e.target.checked) speak("소리 안내를 켰습니다.");
-});
 
 /** 범위를 고칠 때마다 쪽 수와 예상 시간을 알린다. */
 function updateEstimate(announce) {
