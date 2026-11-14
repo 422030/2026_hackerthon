@@ -10,6 +10,7 @@ import json
 import threading
 import traceback
 import uuid
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from app.schema import AccessDoc, JobStatus, PageAnalysis, PageImage, RenderOpti
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
 RETRY_SOURCES = {"degraded", "snapshot"}
+PAGE_WORKERS = 2  # Limit concurrent OCR/Gemini calls to avoid API bursts.
 
 _jobs: dict[str, JobStatus] = {}
 _docs: dict[str, AccessDoc] = {}
@@ -267,25 +269,49 @@ def run(
         _discard_source(path, pages)
 
         st.pages_total = len(pages)
-        analyses: list[PageAnalysis] = []
-        for page in pages:
-            if job_id in _cancelled:
-                break
-            st.current_page = page.page_no
+        # Keep at most two pages in flight. Submit the next only when one finishes,
+        # so cancellation does not queue the entire document.
+        results: dict[int, PageAnalysis] = {}
 
-            st.stage = "ocr"
+        def process_page(page: PageImage) -> PageAnalysis:
             ocr_result = ocr_mod.run_ocr(page)
-
-            st.stage = "analyze"
             pa = adapter.analyze_page(page, ocr_result)
-            pa = guard.cross_check(pa, ocr_result)
+            return guard.cross_check(pa, ocr_result)
 
-            if pa.source in {"degraded", "snapshot"}:
-                st.degraded_pages.append(page.page_no)
+        st.stage = "analyze"
+        with ThreadPoolExecutor(max_workers=PAGE_WORKERS) as pool:
+            remaining = iter(pages)
+            pending = {}
 
-            analyses.append(pa)
-            st.pages_done += 1
-            _save_page(job_id, page, pa)
+            def submit_next() -> bool:
+                if job_id in _cancelled:
+                    return False
+                page = next(remaining, None)
+                if page is None:
+                    return False
+                pending[pool.submit(process_page, page)] = page
+                st.current_page = page.page_no
+                return True
+
+            for _ in range(PAGE_WORKERS):
+                if not submit_next():
+                    break
+
+            while pending:
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    page = pending.pop(future)
+                    pa = future.result()
+                    results[page.page_no] = pa
+                    if pa.source in {"degraded", "snapshot"}:
+                        st.degraded_pages.append(page.page_no)
+                    st.pages_done += 1
+                    _save_page(job_id, page, pa)
+                for _ in done:
+                    submit_next()
+
+        # Concurrent completion order differs from PDF reading order.
+        analyses = [results[p.page_no] for p in pages if p.page_no in results]
 
         stopped = job_id in _cancelled
         if stopped and not analyses:
