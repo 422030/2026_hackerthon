@@ -115,7 +115,7 @@ async function checkHealth() {
       $("health"),
       h.llm_online
         ? `AI 연결됨 (저장된 결과 ${h.cache_entries}건)`
-        : `오프라인 모드 — 미리 준비된 결과를 사용합니다 (저장된 결과 ${h.cache_entries}건)`
+        : "AI 연결 안 됨 — 인터넷 연결과 API 키를 확인해 주세요."
     );
   } catch {
     say($("health"), "서버에 연결할 수 없습니다.");
