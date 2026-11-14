@@ -94,6 +94,8 @@ async function load() {
   $("baseline").textContent =
     (await (await fetch(`/api/jobs/${job}/baseline`)).text()) || "(없음)";
   $("ours").textContent = segments.map((x) => x.text).join("\n");
+
+  announceShortcutHint();
 }
 
 // ── 실패한 쪽 다시 변환 ────────────────────────────────
@@ -258,6 +260,31 @@ $("rate").addEventListener("input", (e) => setRate(Number(e.target.value)));
 
 // 결과 화면의 키보드 음성 재생 조작. 폼 요소와 버튼의 기본 키 동작은 유지한다.
 const SHORTCUT_HELP = "단축키 안내. 스페이스 재생 또는 일시정지. 오른쪽 화살표 다음 단락. 왼쪽 화살표 이전 단락. 위쪽 화살표 속도 증가. 아래쪽 화살표 속도 감소. 홈 처음부터. 물음표 단축키 안내. 이스케이프 재생 종료.";
+
+const SHORTCUT_HINT = "물음표를 누르면 사용법을 들을 수 있습니다.";
+let hintAnnounced = false;
+
+// 결과 화면에 들어오자마자 단축키가 있다는 것부터 알린다.
+// 브라우저가 사용자 조작 전의 음성을 막는 경우가 있어, 막혔으면 첫 조작 때 다시 알린다.
+function announceShortcutHint() {
+  if (hintAnnounced || !segments.length) return;
+  say($("speech-status"), SHORTCUT_HINT);
+  if (!("speechSynthesis" in window)) return;
+
+  const utterance = new SpeechSynthesisUtterance(SHORTCUT_HINT);
+  utterance.lang = "ko-KR";
+  utterance.rate = 1;
+  utterance.onstart = () => { hintAnnounced = true; };
+  speechSynthesis.speak(utterance);
+
+  setTimeout(() => {
+    if (hintAnnounced) return;
+    // 교재를 읽는 중이면 끊지 않는다.
+    const retry = () => { if (!playing) announceShortcutHint(); };
+    document.addEventListener("keydown", retry, { once: true });
+    document.addEventListener("click", retry, { once: true });
+  }, 1200);
+}
 
 function announceHelp() {
   speakFeedback(SHORTCUT_HELP, playing);
