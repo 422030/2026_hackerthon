@@ -6,11 +6,13 @@
 <title>변환 결과 — 전공 교재 접근성 변환기</title>
 <link rel="stylesheet" href="/web/a11y.css">
 <style>
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-             border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
-  .toolbar { display: grid; gap: 12px; }
+  body { text-align: center; }
+  .toolbar { display: grid; gap: 12px; border: 1px solid var(--line);
+             border-radius: 6px; padding: 12px; }
+  #doc, .compare { text-align: start; }
+  #speech-status:empty { margin: 0; padding: 0; border: 0; }
   .playback-controls, .speed-controls, .download-controls {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .playback-controls button { min-width: 0; }
   .speed-controls input { min-width: 0; width: 10rem; padding: 0; }
@@ -28,8 +30,10 @@
   @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
   pre { white-space: pre-wrap; word-break: break-all; font-size: 0.92rem;
         border: 1px solid var(--line); padding: 12px; }
-  .tabs { flex-direction: column; align-items: flex-start; }
-  button { background: #739FF5; color: #172033; border: 0; border-radius: 14px; font-weight: 700; }
+  .tabs { flex-direction: column; align-items: center; }
+  .new-conversion { display: inline-flex; align-items: center; justify-content: center;
+                    padding: .65em 1.25em; min-height: 48px; text-decoration: none; }
+  button, .new-conversion { background: #739FF5; color: #172033; border: 0; border-radius: 14px; font-weight: 700; }
   button:focus-visible { outline-color: var(--fg); }
   #prev, #next { font-size: .9rem; padding: 6px 12px; }
   #play { font-size: 1.1rem; min-height: 52px; padding: 10px 20px; }
@@ -44,7 +48,7 @@
 <header>
   <h1 id="doc-title">변환 결과</h1>
   <p id="doc-summary" role="status">불러오는 중입니다.</p>
-  <p><a href="/">새로운 파일 변환하기</a></p>
+  <p><a class="new-conversion" href="/">새로운 파일 변환하기</a></p>
 
   <div id="retry-box" role="group" aria-labelledby="retry-msg" hidden>
     <p id="retry-msg"></p>
