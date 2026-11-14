@@ -34,10 +34,6 @@ def to_html(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
     for b in doc.blocks:
         parts.append(_block_html(b, opts, fn_by_num))
 
-    if opts.footnote_mode == "end" and doc.footnotes:
-        parts.append(_footnote_section(doc))
-    if doc.table_footnotes:
-        parts.append(_table_footnote_section(doc))
     if opts.include_glossary and doc.glossary:
         parts.append(_glossary(doc))
 
@@ -48,7 +44,7 @@ def _summary(doc: AccessDoc) -> str:
     s = doc.stats
     text = (
         f"총 {s.pages}쪽. 그림 {s.figures}개, 표 {s.tables}개, "
-        f"수식 {s.formulas}개, 각주 {s.footnotes}개."
+        f"수식 {s.formulas}개."
     )
     if doc.degraded_pages:
         pages = ", ".join(str(p) for p in sorted(set(doc.degraded_pages)))
@@ -86,23 +82,8 @@ def _outline(doc: AccessDoc, opts: RenderOptions) -> str:
 
 
 def _inline(text: str, fn_by_num: dict, opts: RenderOptions) -> str:
-    """본문 안의 [^n] 을 각주 링크나 인라인 aside 로 바꾼다."""
-    out = esc(text)
-
-    def repl(m: re.Match) -> str:
-        n = int(m.group(1))
-        if opts.footnote_mode == "inline":
-            fn = fn_by_num.get(n)
-            body = esc(fn.text) if fn else ""
-            return (
-                f'</p><aside role="note">각주 {n}. {body}</aside><p>'
-            )
-        return (
-            f'<sup><a href="#fn{n}" id="fnref{n}" '
-            f'aria-label="각주 {n}">[각주 {n}]</a></sup>'
-        )
-
-    return FOOTNOTE_RE.sub(repl, out)
+    """Hide footnote markers in user-facing HTML."""
+    return FOOTNOTE_RE.sub("", esc(text))
 
 
 def _block_html(b: Block, opts: RenderOptions, fn_by_num: dict) -> str:
