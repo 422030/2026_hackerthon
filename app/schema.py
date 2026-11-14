@@ -223,6 +223,14 @@ class PageAnalysis(BaseModel):
     reading_order_source: Literal["llm", "geometric", "fallback"] = "llm"
     page_kind: Literal["body", "toc", "index", "cover", "blank", "exercise"] = "body"
 
+    @field_validator("page_kind", mode="before")
+    @classmethod
+    def _normalize_page_kind(cls, value: str) -> str:
+        # Gemini may label a title/cover page as "title"; normalize to the schema value.
+        if isinstance(value, str) and value.strip().lower() == "title":
+            return "cover"
+        return value
+
     warnings: list[str] = Field(default_factory=list)
     elapsed_ms: int = 0
     raw_response_path: str | None = None
