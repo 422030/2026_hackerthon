@@ -22,16 +22,20 @@ $("stop").addEventListener("click", async () => {
   say($("progress"), msg);
   speak(msg);
   try {
-    await fetch(`/api/jobs/${currentJob}/cancel`, { method: "POST" });
+    const response = await fetch(`/api/jobs/${currentJob}/cancel`, { method: "POST" });
+    if (!response.ok) throw new Error();
   } catch {
     $("stop").disabled = false;
+    say($("progress"), "중단을 요청하지 못했습니다. 다시 시도해 주세요.");
   }
 });
 
 function resetForm() {
   $("start").disabled = false;
   $("start").textContent = "변환 시작";
-  $("stop").hidden = true;
+  $("conversion-panel").hidden = true;
+  $("form").hidden = false;
+  $("start").focus();
   currentJob = null;
 }
 
@@ -135,8 +139,8 @@ $("form").addEventListener("submit", async (e) => {
 
   btn.disabled = true;
   btn.textContent = "변환 중...";
-  $("stop").hidden = false;
-  $("stop").disabled = false;
+  lastStatusText = "";
+  say($("progress"), "");
 
   try {
     const fd = new FormData($("form"));
@@ -144,6 +148,10 @@ $("form").addEventListener("submit", async (e) => {
     if (!r.ok) throw new Error(`서버 응답 ${r.status}`);
     const info = await r.json();
     currentJob = info.job_id;
+    $("form").hidden = true;
+    $("stop").disabled = false;
+    $("conversion-panel").hidden = false;
+    $("conversion-title").focus();
     if (info.capped) {
       const msg =
         `${info.max_pages}쪽까지만 변환합니다. ` +
@@ -170,12 +178,14 @@ async function poll(jobId) {
     let st;
     try {
       const r = await fetch(`/api/jobs/${jobId}`);
+      if (!r.ok) throw new Error(`서버 응답 ${r.status}`);
       st = await r.json();
       fails = 0;
     } catch {
       if (++fails >= 3) {
         $("error").hidden = false;
         $("error").textContent = "서버와 연결이 끊겼습니다. 다시 시도해 주세요.";
+        resetForm();
         return;
       }
       continue;
