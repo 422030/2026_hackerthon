@@ -32,9 +32,58 @@ LEXICON = {
 
 FOOTNOTE_RE = re.compile(r"\[\^(\d+)\]")
 
+# Read common inline math notation aloud without changing the displayed textbook.
+# Keep transformations conservative: complex expressions remain for the AI reader.
+LETTER_NAMES = {
+    "a": "에이", "b": "비", "c": "씨", "d": "디", "e": "이",
+    "f": "에프", "g": "지", "h": "에이치", "i": "아이", "j": "제이",
+    "k": "케이", "l": "엘", "m": "엠", "n": "엔", "o": "오",
+    "p": "피", "q": "큐", "r": "알", "s": "에스", "t": "티",
+    "u": "유", "v": "브이", "w": "더블유", "x": "엑스",
+    "y": "와이", "z": "제트",
+}
+SUPERSCRIPT = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+SUBSCRIPT = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+MATH_BASE = r"[A-Za-z]"
+MATH_EXP = r"(?:\{[A-Za-z0-9]+\}|[A-Za-z0-9]+)"
+POWER_RE = re.compile(rf"(?<![A-Za-z])({MATH_BASE})\s*\^\s*({MATH_EXP})")
+UNICODE_POWER_RE = re.compile(r"(?<![A-Za-z])([A-Za-z])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)")
+SUB_RE = re.compile(r"(?<![A-Za-z])([A-Za-z])_({[A-Za-z0-9]+}|[A-Za-z0-9]+)")
+UNICODE_SUB_RE = re.compile(r"(?<![A-Za-z])([A-Za-z])([₀₁₂₃₄₅₆₇₈₉]+)")
+FRAC_RE = re.compile(r"\\frac\s*\{([A-Za-z0-9]+)\}\s*\{([A-Za-z0-9]+)\}")
+SQRT_RE = re.compile(r"(?:\\sqrt\s*\{([A-Za-z0-9]+)\}|√\s*([A-Za-z0-9]+))")
+
+
+def _math_atom(value: str) -> str:
+    value = value.strip("{}")
+    if value.isdigit():
+        return value
+    return " ".join(LETTER_NAMES.get(ch.lower(), ch) for ch in value)
+
+
+def _power(base: str, exponent: str) -> str:
+    exp = exponent.strip("{}")
+    suffix = "제곱" if exp == "2" else "세제곱" if exp == "3" else f"{_math_atom(exp)}승"
+    return f" {_math_atom(base)}의 {suffix} "
+
+
+def normalize_math_speech(text: str) -> str:
+    """Convert unambiguous simple math notation to Korean speech."""
+    text = FRAC_RE.sub(lambda m: f" {_math_atom(m[2])}분의 {_math_atom(m[1])} ", text)
+    text = SQRT_RE.sub(lambda m: f" 루트 {_math_atom(m[1] or m[2])} ", text)
+    text = POWER_RE.sub(lambda m: _power(m[1], m[2]), text)
+    text = UNICODE_POWER_RE.sub(lambda m: _power(m[1], m[2].translate(SUPERSCRIPT)), text)
+    text = SUB_RE.sub(lambda m: f" {_math_atom(m[1])} 아래첨자 {_math_atom(m[2])} ", text)
+    text = UNICODE_SUB_RE.sub(
+        lambda m: f" {_math_atom(m[1])} 아래첨자 {_math_atom(m[2].translate(SUBSCRIPT))} ", text
+    )
+    return text
+
+
+
 
 def speak_text(s: str) -> str:
-    out = FOOTNOTE_RE.sub("", s or "")
+    out = normalize_math_speech(FOOTNOTE_RE.sub("", s or ""))
     for k, v in LEXICON.items():
         out = out.replace(k, f" {v} ")
     return re.sub(r"\s+", " ", out).strip()
