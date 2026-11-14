@@ -92,7 +92,7 @@ function updateEstimate(announce) {
   const pages = Math.min(asked, MAX_PAGES);
   const minutes = Math.max(1, Math.round((pages * SEC_PER_PAGE) / 60));
 
-  let text = `${from}쪽부터 ${from + pages - 1}쪽까지 ${pages}쪽. 약 ${minutes}분 걸립니다.`;
+  let text = `총 ${pages}쪽. 약 ${minutes}분 소요됩니다.`;
   if (asked > MAX_PAGES) {
     text += ` 한 번에 ${MAX_PAGES}쪽까지만 변환하므로 ${asked - pages}쪽은 빠집니다.`;
   }
