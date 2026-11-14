@@ -181,7 +181,7 @@ def _to_analysis(data: dict, page: PageImage) -> PageAnalysis:
         model_id=model_id(),
         prompt_version=prompts.PROMPT_VERSION,
         blocks=data.get("blocks", []),
-        terms=data.get("terms", []),
+        terms=[],  # Glossary generation disabled; tolerate stale model responses.
         column_count=data.get("column_count", 1),
         page_kind=data.get("page_kind", "body"),
         warnings=data.get("warnings", []),
