@@ -62,20 +62,51 @@ def load_pages(
         pix.save(png_path)
 
         native = page.get_text("text") or ""
-        out.append(
-            PageImage(
-                page_no=idx + 1,
-                image_path=str(png_path),
-                width=pix.width,
-                height=pix.height,
-                dpi=dpi,
-                sha1=_sha1_file(png_path),
-                native_text=native if len(native.strip()) > 40 else None,
-                is_scanned=len(native.strip()) <= 40,
-            )
+        img = PageImage(
+            page_no=idx + 1,
+            image_path=str(png_path),
+            width=pix.width,
+            height=pix.height,
+            dpi=dpi,
+            sha1=_sha1_file(png_path),
+            native_text=native if len(native.strip()) > 40 else None,
+            is_scanned=len(native.strip()) <= 40,
         )
+        _write_sidecar(img, png_path)
+        out.append(img)
     doc.close()
     return out
+
+
+def _sidecar_path(png_path: Path) -> Path:
+    return png_path.with_suffix(".page.json")
+
+
+def _write_sidecar(img: PageImage, png_path: Path) -> None:
+    """PNG 옆에 쪽 정보를 적어 둔다.
+
+    원본 PDF 는 쪽을 다 뽑은 직후 지운다. 텍스트층과 해상도는 PNG 만 봐서는
+    되살릴 수 없으므로 여기 남겨 둔다. 실패해도 변환 자체는 계속 간다.
+    """
+    try:
+        _sidecar_path(png_path).write_text(img.model_dump_json(), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def load_cached_page(image_path: str) -> PageImage | None:
+    """이미 뽑아둔 PNG 로 PageImage 를 되살린다. 없으면 None.
+
+    다시 변환할 때 쓴다. 원본 PDF 가 이미 없어도 쪽을 다시 돌릴 수 있다.
+    """
+    png = Path(image_path)
+    meta = _sidecar_path(png)
+    if not png.exists() or not meta.exists():
+        return None
+    try:
+        return PageImage.model_validate_json(meta.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def _single_image(src: Path) -> PageImage:

@@ -16,7 +16,7 @@ from pathlib import Path
 from app import assemble, ingest, ocr as ocr_mod
 from app.db import connect
 from app.llm import adapter, guard
-from app.schema import AccessDoc, JobStatus, PageAnalysis, RenderOptions
+from app.schema import AccessDoc, JobStatus, PageAnalysis, PageImage, RenderOptions
 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
 RETRY_SOURCES = {"degraded", "snapshot"}
@@ -142,8 +142,8 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
     try:
         with connect() as conn:
             saved = conn.execute(
-                "SELECT page_no, analysis_json, source FROM pages WHERE job_id = ?"
-                " ORDER BY page_no",
+                "SELECT page_no, analysis_json, source, image_path FROM pages"
+                " WHERE job_id = ? ORDER BY page_no",
                 (job_id,),
             ).fetchall()
             job_row = conn.execute(
@@ -153,9 +153,8 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
         if not saved or not job_row:
             raise RuntimeError("이 변환의 페이지 기록이 없다")
 
-        src = UPLOAD_DIR / job_row["filename"]
-        if not src.exists():
-            raise RuntimeError(f"원본 파일이 없다: {job_row['filename']}")
+        # 원본 PDF 는 처음 변환할 때 지웠다. 뽑아둔 PNG 로 다시 돌린다.
+        cached = {r["page_no"]: r["image_path"] for r in saved}
 
         targets = [r["page_no"] for r in saved if r["source"] in RETRY_SOURCES]
         st.pages_total = len(targets)
@@ -172,12 +171,11 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
             st.current_page = page_no
 
             st.stage = "ingest"
-            loaded = ingest.load_pages(str(src), page_range=(page_no, page_no))
-            if not loaded:
+            page = ingest.load_cached_page(cached.get(page_no, ""))
+            if page is None:
                 st.degraded_pages.append(page_no)
                 st.pages_done += 1
                 continue
-            page = loaded[0]
 
             st.stage = "ocr"
             ocr_result = ocr_mod.run_ocr(page)
@@ -208,7 +206,7 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
 
         with _lock:
             _docs[job_id] = doc
-        _save_job(job_id, str(src), doc, st)
+        _save_job(job_id, job_row["filename"], doc, st)
 
         st.stage = "render"
         st.status = "done"
@@ -217,6 +215,24 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
         st.status = "error"
         st.error = f"{type(exc).__name__}: {exc}"
         traceback.print_exc()
+
+
+def _discard_source(path: str, pages: list[PageImage]) -> None:
+    """쪽을 다 뽑은 원본 업로드 파일을 지운다.
+
+    이미지를 올린 경우 그 파일이 곧 쪽 이미지다. 지우면 변환할 것이 없어지므로
+    건너뛴다. 업로드 폴더 밖의 파일도 건드리지 않는다.
+    지우지 못해도 변환은 그대로 간다.
+    """
+    src = Path(path).resolve()
+    if any(Path(p.image_path).resolve() == src for p in pages):
+        return
+    if src.parent != UPLOAD_DIR.resolve():
+        return
+    try:
+        src.unlink(missing_ok=True)
+    except OSError:
+        pass
 
 
 def run(
@@ -245,6 +261,10 @@ def run(
             raise RuntimeError(
                 f"{page_from}쪽을 찾을 수 없습니다. 이 문서는 {total}쪽까지 있습니다."
             )
+
+        # 쪽을 다 뽑았으면 원본은 더 쓰지 않는다. 교재 한 권이 수백 MB 라
+        # 남겨 두면 변환할 때마다 디스크에 그대로 쌓인다.
+        _discard_source(path, pages)
 
         st.pages_total = len(pages)
         analyses: list[PageAnalysis] = []
