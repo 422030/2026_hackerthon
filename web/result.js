@@ -181,24 +181,13 @@ $("rate").addEventListener("input", (e) => {
 });
 
 // ── 탭 ─────────────────────────────────────────────────
-const tabs = [$("tab-read"), $("tab-compare")];
-const panels = [$("panel-read"), $("panel-compare")];
-
-function selectTab(i) {
-  tabs.forEach((t, k) => {
-    t.setAttribute("aria-selected", String(k === i));
-    t.tabIndex = k === i ? 0 : -1;
-  });
-  panels.forEach((p, k) => (p.hidden = k !== i));
-  tabs[i].focus();
-}
-
-tabs.forEach((t, i) => {
-  t.addEventListener("click", () => selectTab(i));
-  t.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") selectTab((i + 1) % tabs.length);
-    if (e.key === "ArrowLeft") selectTab((i - 1 + tabs.length) % tabs.length);
-  });
+$("tab-compare").addEventListener("click", (event) => {
+  const button = event.currentTarget;
+  const showComparison = button.getAttribute("aria-expanded") === "false";
+  button.setAttribute("aria-expanded", String(showComparison));
+  button.textContent = showComparison ? "변환 결과로 돌아가기" : "일반 OCR과 비교";
+  $("panel-read").hidden = showComparison;
+  $("panel-compare").hidden = !showComparison;
 });
 
 load();
