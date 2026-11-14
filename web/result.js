@@ -214,13 +214,10 @@ function moveParagraph(delta) {
   playbackRun++;
   speechSynthesis.cancel();
   const next = Math.max(0, Math.min(segments.length - 1, cursor + delta));
-  const atFirst = delta < 0 && cursor === 0;
   cursor = next;
   highlight(segments[cursor]?.block_id);
   updatePlaybackProgress();
-  speakFeedback(atFirst
-    ? "첫 단락입니다."
-    : `전체 ${segments.length}개 중 ${cursor + 1}번째.`, playing);
+  speakFeedback(delta < 0 ? "이전" : "다음", playing);
 }
 
 $("prev").addEventListener("click", () => moveParagraph(-1));
