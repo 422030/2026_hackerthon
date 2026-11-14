@@ -40,11 +40,6 @@ def to_markdown(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
         else:
             out += [re.sub(r"\[\^\d+\]", "", b.text), ""]
 
-    if doc.glossary:
-        out += ["## 용어·외국어 표기", ""]
-        for t in doc.glossary:
-            out.append(f"- **{t.surface}** ({t.reading}) — {t.gloss}")
-
     return "\n".join(out)
 
 
