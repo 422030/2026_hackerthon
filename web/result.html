@@ -14,6 +14,9 @@
   .playback-controls, .speed-controls, .download-controls {
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
+  .playback-progress { display: grid; justify-items: center; gap: 4px; }
+  .playback-progress progress { width: min(100%, 24rem); accent-color: #739FF5; }
+  .playback-progress p { margin: 0; font-size: .9rem; }
   .playback-controls button { min-width: 0; }
   .speed-controls input { min-width: 0; width: 10rem; padding: 0; }
   .speed-controls label, .speed-controls output { flex-shrink: 0; }
@@ -74,6 +77,10 @@
       <button id="prev">이전 단락</button>
       <button id="play" aria-label="음성 재생" aria-pressed="false"><span class="play-icon" aria-hidden="true"></span></button>
       <button id="next">다음 단락</button>
+    </div>
+    <div class="playback-progress">
+      <progress id="audio-progress" aria-label="음성 재생 진행률" max="1" value="0"></progress>
+      <p id="audio-time">0:00 / 0:00 (예상)</p>
     </div>
     <div class="speed-controls">
       <label for="rate">읽기 속도 조정</label>
