@@ -8,6 +8,20 @@
 <style>
   .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
              border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+  .toolbar { display: grid; gap: 12px; }
+  .playback-controls, .speed-controls, .download-controls {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .playback-controls button { min-width: 0; }
+  .speed-controls input { min-width: 0; width: 10rem; padding: 0; }
+  .speed-controls label, .speed-controls output { flex-shrink: 0; }
+  .download-controls { flex-wrap: wrap; }
+  .download-controls a {
+    display: inline-flex; align-items: center; min-height: 44px;
+    padding: 6px 12px; border: 1px solid #111; border-radius: 0;
+    background: #fff; color: #111; text-decoration: none;
+  }
+  .download-controls a:focus-visible { outline-color: var(--fg); }
   .tabs { display: flex; gap: 8px; margin: 1.5em 0 0; padding: 0; }
   .tabs button[aria-selected="true"] { border-width: 3px; font-weight: bold; }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -52,14 +66,20 @@
   <h2 class="sr-only">읽기</h2>
 
   <div class="toolbar" role="toolbar" aria-label="읽기 도구">
-    <button id="prev">이전 단락</button>
-    <button id="play" aria-pressed="false">읽어주기 시작</button>
-    <button id="next">다음 단락</button>
-    <label for="rate">읽기 속도</label>
-    <input type="range" id="rate" min="0.5" max="2.5" step="0.1" value="1.1">
-    <output for="rate" id="rate-out">1.1배</output>
-    <a id="dl-html" href="#">HTML 내려받기</a>
-    <a id="dl-md" href="#">마크다운 내려받기</a>
+    <div class="playback-controls">
+      <button id="prev">이전 단락</button>
+      <button id="play" aria-pressed="false">읽어주기 시작</button>
+      <button id="next">다음 단락</button>
+    </div>
+    <div class="speed-controls">
+      <label for="rate">읽기 속도 조정</label>
+      <input type="range" id="rate" min="0.5" max="2.5" step="0.1" value="1.1">
+      <output for="rate" id="rate-out">1.1배</output>
+    </div>
+    <div class="download-controls">
+      <a id="dl-html" href="#">HTML 내려받기</a>
+      <a id="dl-md" href="#">마크다운 내려받기</a>
+    </div>
   </div>
   <p id="speech-status" role="status"></p>
 
