@@ -34,9 +34,6 @@ def to_html(doc: AccessDoc, opts: RenderOptions | None = None) -> str:
     for b in doc.blocks:
         parts.append(_block_html(b, opts, fn_by_num))
 
-    if opts.include_glossary and doc.glossary:
-        parts.append(_glossary(doc))
-
     return "\n".join(p for p in parts if p)
 
 

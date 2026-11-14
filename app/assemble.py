@@ -54,7 +54,6 @@ def assemble(
     page_fns = [b for b in flat if b.type == "footnote" and b.footnote_scope == "page"]
     cont_fns = [b for b in flat if b.type == "footnote" and b.footnote_scope != "page"]
     body = [b for b in flat if b.type != "footnote"]
-    terms = [t for pa in pages for t in pa.terms]
 
     _merge_across_pages(body, page_fns)
     _normalize_headings(body, opts.heading_base, doc, meta)
@@ -64,7 +63,7 @@ def assemble(
     doc.blocks = _insert_page_breaks(body) if opts.include_page_breaks else body
     doc.footnotes = page_fns
     doc.table_footnotes = cont_fns
-    doc.glossary = _dedupe_terms(terms)
+    doc.glossary = []  # No generated glossary, including legacy cached analyses.
     doc.stats = _stats(doc, pages)
     return doc
 
