@@ -34,6 +34,28 @@ function say(el, text) {
   if (el.textContent !== text) el.textContent = text;
 }
 
+// Final speech-only fallback for math not normalized by the server.
+function normalizeMathForSpeech(value) {
+  const names = {n:"엔",x:"엑스",a:"에이",b:"비",m:"엠",f:"에프"};
+  const atom = v => names[v.toLowerCase()] || v;
+  const supers = {"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9"};
+  const power = (base, exponent) => atom(base) + "의 " +
+    (exponent === "2" ? "제곱" : exponent === "3" ? "세제곱" : atom(exponent) + "승");
+  const exponent = text => text
+    .replace(/([a-zA-Z])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g,
+      (_, b, e) => power(b, [...e].map(c => supers[c]).join("")))
+    .replace(/([a-zA-Z])\^\{?([a-zA-Z0-9]+)\}?/g, (_, b, e) => power(b, e));
+  const readInner = text => exponent(text)
+    .replace(/\b([2-9])\s*([nx])\b/gi, (_, c, v) => c + " " + atom(v))
+    .replace(/\b([nx])\b/gi, (_, v) => atom(v));
+  return exponent(value.replace(/(O|Ω|Θ)\s*\(\s*([^()]*)\s*\)/g,
+    (_, kind, inner) => ({O:"빅오",Ω:"빅오메가",Θ:"빅세타"}[kind]) + " " + readInner(inner)))
+    .replace(/\b([2-9])\s*([nx])(?=[가-힣\s.,;)]|$)/gi, (_, c, v) => c + " " + atom(v))
+    .replace(/\b([nx])(?=[은는이가을를과와에의보다])/gi, (_, v) => atom(v))
+    .replace(/∈/g, " 에 속한다 ").replace(/→/g, " 따라서 ")
+    .replace(/\s+/g, " ").trim();
+}
+
 async function load() {
   if (!job) {
     say($("doc-summary"), "job 값이 없습니다. 업로드 화면에서 다시 시작해 주세요.");
@@ -60,6 +82,7 @@ async function load() {
   $("doc").insertAdjacentHTML("beforeend", html);
 
   segments = await (await fetch(`/api/jobs/${job}/speech`)).json();
+  segments = segments.map(segment => ({...segment, text: normalizeMathForSpeech(segment.text || "")}));
 
   for (const segment of segments) {
     const duration = Math.max(.5, Array.from(segment.text).length / 6);
