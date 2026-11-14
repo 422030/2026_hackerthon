@@ -198,7 +198,11 @@ function togglePlayback() {
   }
 }
 
-$("play").addEventListener("click", togglePlayback);
+$("play").addEventListener("click", () => {
+  togglePlayback();
+  // 재생 후에는 문서에 포커스를 두어 단축키를 바로 사용할 수 있게 한다.
+  $("doc").focus({ preventScroll: true });
+});
 
 $("prev").addEventListener("click", () => {
   if (!segments.length) return;
@@ -252,7 +256,10 @@ document.addEventListener("keydown", (event) => {
   if ($("panel-read").hidden) return;
   const target = event.target;
   if (target instanceof Element &&
-      (target.closest("input, textarea, select, button, a, [contenteditable], [role='button']"))) return;
+      target.closest("input, textarea, select, [contenteditable], [role='textbox']")) return;
+  // 버튼과 링크의 Space/Enter 기본 동작은 유지한다.
+  if ((event.key === " " || event.key === "Spacebar") &&
+      target instanceof Element && target.closest("button, a, [role='button']")) return;
   if (!segments.length && event.key !== "?") return;
 
   switch (event.key) {
