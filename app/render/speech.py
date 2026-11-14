@@ -70,7 +70,15 @@ def to_speech_text(
         400,
     )
 
+    # PDF 실제 쪽 번호를 각 페이지의 첫 읽기 블록 앞에 한 번 안내한다.
+    # page_break 블록 자체는 읽지 않아 중복 안내를 피한다.
+    last_page_no = None
     for b in doc.blocks:
+        if b.type == "page_break":
+            continue
+        if b.page_no != last_page_no:
+            add(b.id, "page", f"{b.page_no}페이지입니다.", 200)
+            last_page_no = b.page_no
         if b.type == "heading":
             add(b.id, "heading", f"제목 레벨 {b.level}. {b.text}", 400)
         elif b.type in {"paragraph", "caption", "marginalia", "unknown"}:
@@ -78,8 +86,6 @@ def to_speech_text(
         elif b.type == "list":
             for i, item in enumerate(b.list_items, start=1):
                 add(b.id, "body", f"{i}. {item}", 100)
-        elif b.type == "page_break":
-            add(b.id, "page", b.text, 300)
         elif b.type == "formula":
             add(b.id, "formula", f"수식. {b.speech}", 300)
         elif b.type == "figure":
