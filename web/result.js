@@ -142,7 +142,6 @@ function highlight(blockId) {
 function start() {
   if (!segments.length) return;
   playing = true;
-  $("play").textContent = "일시정지";
   $("play").setAttribute("aria-pressed", "true");
   say($("speech-status"), "읽기를 시작합니다.");
   speakFrom(cursor);
@@ -151,7 +150,6 @@ function start() {
 function stop() {
   playing = false;
   speechSynthesis.cancel();
-  $("play").textContent = "읽어주기 시작";
   $("play").setAttribute("aria-pressed", "false");
 }
 
