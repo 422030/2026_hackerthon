@@ -16,7 +16,7 @@
 body {
   background: var(--bg); color: var(--fg);
   margin: 0 auto; padding: 16px; max-width: 70ch;
-  font-family: system-ui, "Malgun Gothic", sans-serif;
+  font-family: "Pretendard", "Malgun Gothic", sans-serif;
   font-size: 1.05rem; line-height: 1.8;
 }
 
