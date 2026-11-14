@@ -106,22 +106,6 @@ $("page-from").addEventListener("input", () => updateEstimate(false));
 $("page-to").addEventListener("input", () => updateEstimate(false));
 updateEstimate(false);
 
-/** 연결 상태 표시. 색이 아니라 텍스트로 알린다. */
-async function checkHealth() {
-  try {
-    const r = await fetch("/api/health");
-    const h = await r.json();
-    say(
-      $("health"),
-      h.llm_online
-        ? `AI 연결됨 (저장된 결과 ${h.cache_entries}건)`
-        : "AI 연결 안 됨 — 인터넷 연결과 API 키를 확인해 주세요."
-    );
-  } catch {
-    say($("health"), "서버에 연결할 수 없습니다.");
-  }
-}
-
 $("file").addEventListener("change", (e) => {
   const f = e.target.files[0];
   if (!f) return;
@@ -242,4 +226,3 @@ async function poll(jobId) {
   }
 }
 
-checkHealth();
