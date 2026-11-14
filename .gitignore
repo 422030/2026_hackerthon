@@ -11,3 +11,6 @@ venv/
 *.sqlite3
 .cache/
 cache/
+
+# 변환 산출물. 교재 페이지 PNG 가 쌓인다. 제3자 저작물이라 올리지 않는다.
+data/
