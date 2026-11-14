@@ -49,6 +49,20 @@ def model_id() -> str:
     return "none"
 
 
+def cache_model_id() -> str:
+    """캐시 키에 넣을 모델 이름. 오프라인이어도 '원래 쓰였을 모델' 을 돌려준다.
+
+    model_id() 는 오프라인이면 "none" 이라 키가 달라지고, 그러면 미리 받아둔
+    snapshots 가 하나도 안 걸린다. 와이파이가 끊긴 현장에서 쓰라고 만든 폴백이므로
+    여기서는 FORCE_OFFLINE 도, 키가 없는 것도 보지 않는다.
+    보고용 값은 model_id() 가 그대로 정직하게 낸다.
+    """
+    if os.environ.get("ANTHROPIC_API_KEY") and not backend_gemini.available():
+        return os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
+    # 키가 아예 없는 노트북에서도 스냅샷이 걸려야 한다. 기본 백엔드는 Gemini 다.
+    return backend_gemini.DEFAULT_MODEL
+
+
 def backend_status() -> dict:
     backend = active_backend()
     return {
@@ -64,7 +78,10 @@ def backend_status() -> dict:
 def analyze_page(
     page: PageImage, ocr: OcrResult, mode: str = "auto", timeout_s: int = TIMEOUT_S
 ) -> PageAnalysis:
-    key = cache.cache_key("page_analysis", page.sha1, prompts.PROMPT_VERSION, model_id())
+    # 키는 cache_model_id() 로 만든다. 오프라인에서도 저장된 스냅샷이 걸려야 한다.
+    key = cache.cache_key(
+        "page_analysis", page.sha1, prompts.PROMPT_VERSION, cache_model_id()
+    )
 
     hit = cache.cache_get(key)
     if hit is not None:
