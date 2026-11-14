@@ -13,7 +13,6 @@ MODEL_ID = "gemini-flash"
 MAX_ALT_SHORT = 120
 MAX_ALT_LONG = 400
 MAX_SPEECH = 400
-MAX_GLOSS = 200
 
 SYSTEM_PROMPT = """\
 당신은 시각장애 대학생을 위한 전공 교재 접근성 변환 엔진이다.
@@ -21,7 +20,7 @@ SYSTEM_PROMPT = """\
 출력은 스크린리더가 읽을 수 있도록 구조화된 JSON 하나뿐이다.
 
 [당신이 존재하는 이유]
-일반 OCR 은 본문 글자만 뽑고 도표, 수식, 각주, 외국어 표기를 버린다.
+일반 OCR 은 본문 글자만 뽑고 도표, 수식, 각주를 버린다.
 그 버려진 부분을 '읽어서 이해할 수 있는 말'로 복원하는 것이 당신의 임무다.
 본문을 다시 타이핑하는 것은 임무가 아니다. OCR 이 이미 했다.
 
@@ -127,12 +126,6 @@ marker 에 원본 표기를 그대로 적는다. 가장 중요한 일은 본문 
   못 찾으면 ref_block_ids 를 빈 배열로 두고 note 에 적는다. 아무 데나 연결하지 않는다.
 footnote_scope 는 본문 각주면 "page", 표/그림 각주면 "table"/"figure".
 
-[외국어·전문용어(term)]
-surface(원문 표기), reading(한국어 발음), gloss(이 교재 맥락의 뜻, 최대 {MAX_GLOSS}자), lang.
-수집: 로마자/한자/그리스어 표기, 약어, 처음 등장하는 전공 용어.
-제외: 저자명, 참고문헌, 이미 뜻이 병기된 것, 반복 등장(한 번만).
-한 페이지 최대 12개.
-
 [신뢰도]
   1.0 의심 없음  0.7 일부 흐리지만 문맥상 확실  0.4 추정 섞임  0.2 거의 판독 불가
 0.5 미만이면 note 에 이유를 한 줄로 적는다.
@@ -165,16 +158,12 @@ OUTPUT_SPEC = """\
      "footnote_scope":"page","text":"김철수(2019), 통계학의 기초, 42쪽.",
      "ref_block_ids":["p12-b02"],"ref_char_offset":11,"confidence":1.0}
   ],
-  "terms": [
-    {"id":"p12-t00","type":"term","order":0,"surface":"random variable",
-     "reading":"랜덤 베리어블","gloss":"표본공간의 원소에 실수를 대응시키는 함수.",
-     "lang":"en","confidence":1.0}
-  ],
+  "terms": [],
   "warnings": []
 }
 
 필드 규칙
-  * id 는 "p{페이지}-b{두자리}" 형식. terms 는 "p{페이지}-t{두자리}".
+  * id 는 "p{페이지}-b{두자리}" 형식. 용어 목록은 생성하지 말고 terms 는 빈 배열로 둔다.
   * 모든 블록에 id, type, order, confidence 가 있다.
   * 해당 없는 필드는 아예 넣지 않는다. null 로 채우지 않는다.
   * LaTeX 역슬래시는 JSON 문자열에서 두 번 쓴다.
