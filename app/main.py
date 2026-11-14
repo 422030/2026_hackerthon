@@ -45,25 +45,6 @@ def result_page() -> FileResponse:
     return FileResponse(WEB_DIR / "result.html")
 
 
-@app.get("/library.html")
-def library_page() -> FileResponse:
-    return FileResponse(WEB_DIR / "library.html")
-
-
-@app.get("/api/library")
-def library() -> JSONResponse:
-    """변환해 둔 교재 목록. 같은 교재를 두 번 변환하지 않게 한다."""
-    return JSONResponse(jobs.list_jobs())
-
-
-@app.delete("/api/jobs/{job_id}")
-def delete_job(job_id: str) -> JSONResponse:
-    """보관함 항목 삭제. 변환 캐시는 남으므로 같은 교재를 다시 올리면 즉시 끝난다."""
-    if not jobs.delete_job(job_id):
-        return JSONResponse({"error": "unknown job"}, status_code=404)
-    return JSONResponse({"deleted": job_id})
-
-
 @app.get("/api/health")
 def health() -> JSONResponse:
     return JSONResponse(adapter.backend_status())
