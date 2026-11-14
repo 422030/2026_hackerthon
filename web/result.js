@@ -204,30 +204,29 @@ $("play").addEventListener("click", () => {
   $("doc").focus({ preventScroll: true });
 });
 
-$("prev").addEventListener("click", () => {
+function moveParagraph(delta) {
   if (!segments.length) return;
   playbackRun++;
   speechSynthesis.cancel();
-  cursor = Math.max(0, cursor - 1);
+  const next = Math.max(0, Math.min(segments.length - 1, cursor + delta));
+  const atFirst = delta < 0 && cursor === 0;
+  cursor = next;
   if (playing) speakFrom(cursor);
   else highlight(segments[cursor]?.block_id);
   updatePlaybackProgress();
-});
+  say($("speech-status"), atFirst
+    ? "첫 단락입니다."
+    : `전체 ${segments.length}개 중 ${cursor + 1}번째.`);
+}
 
-$("next").addEventListener("click", () => {
-  if (!segments.length) return;
-  playbackRun++;
-  speechSynthesis.cancel();
-  cursor = Math.min(segments.length - 1, cursor + 1);
-  if (playing) speakFrom(cursor);
-  else highlight(segments[cursor]?.block_id);
-  updatePlaybackProgress();
-});
+$("prev").addEventListener("click", () => moveParagraph(-1));
+$("next").addEventListener("click", () => moveParagraph(1));
 
 function setRate(rate) {
   const value = Math.max(0.5, Math.min(2.5, Math.round(rate * 10) / 10));
   $("rate").value = value.toFixed(1);
   $("rate-out").textContent = `${value.toFixed(1)}배`;
+  say($("speech-status"), `${value.toFixed(1)}배.`);
   updatePlaybackProgress();
   if (playing) {
     playbackRun++;
@@ -294,6 +293,7 @@ document.addEventListener("keydown", (event) => {
         highlight(segments[0]?.block_id);
         updatePlaybackProgress();
       }
+      say($("speech-status"), "첫 단락으로 이동했습니다.");
       break;
     case "?":
       event.preventDefault();
