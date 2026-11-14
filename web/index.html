@@ -31,6 +31,8 @@ input[type="number"] { width: 5ch; box-sizing: content-box; }
 #start:focus-visible, #stop:focus-visible { outline-color: var(--fg); }
 #start:disabled, #stop:disabled { cursor: default; }
 #conversion-panel { margin-block: 2rem 1rem; }
+#form fieldset { font-size: 1.1rem; }
+#form fieldset .hint { font-size: 1em; }
 #conversion-title { margin-top: 0; }
 #file-info:empty, #progress:empty { border: 0; padding: 0; margin: 0; }
 </style>
@@ -84,12 +86,12 @@ input[type="number"] { width: 5ch; box-sizing: content-box; }
       <p>
         <input type="radio" id="fn-end" name="footnote_mode" value="end" checked>
         <label for="fn-end">문서 끝에 모아서</label>
-        <span class="hint">— 표준 방식. 링크로 갔다가 돌아옵니다.</span>
+        <span class="hint">— 본문의 각주 링크를 누르면 문서 끝에 모아 둔 각주로 이동해요.</span>
       </p>
       <p>
         <input type="radio" id="fn-inline" name="footnote_mode" value="inline">
         <label for="fn-inline">본문 중간에 바로</label>
-        <span class="hint">— 음성으로 들을 때 편합니다.</span>
+        <span class="hint">— 각주가 나오는 자리에서 설명을 바로 읽거나 들을 수 있어요.</span>
       </p>
     </fieldset>
 
@@ -97,11 +99,11 @@ input[type="number"] { width: 5ch; box-sizing: content-box; }
       <legend>처리 방식</legend>
       <p>
         <input type="radio" id="mode-auto" name="mode" value="auto" checked>
-        <label for="mode-auto">자동 (인터넷을 쓸 수 있으면 사용)</label>
+        <label for="mode-auto">자동 (온라인 상태에서는 AI로 변환해요)</label>
       </p>
       <p>
         <input type="radio" id="mode-offline" name="mode" value="offline">
-        <label for="mode-offline">오프라인 전용 (미리 준비된 결과만 사용)</label>
+        <label for="mode-offline">오프라인 전용 (인터넷 없이 미리 저장된 변환 결과를 불러와요)</label>
       </p>
     </fieldset>
   </section>
