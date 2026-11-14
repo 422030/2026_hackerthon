@@ -15,24 +15,16 @@ import os
 import time
 from pathlib import Path
 
-from app import cache, heuristics
+from app import cache
 from app.llm import backend_gemini, prompts
 from app.ocr import line_table
 from app.schema import OcrResult, PageAnalysis, PageImage
 
-FORCE_OFFLINE = False
 TIMEOUT_S = 90
 RAW_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "raw"
 
 
-def set_offline(flag: bool) -> None:
-    global FORCE_OFFLINE
-    FORCE_OFFLINE = flag
-
-
 def active_backend() -> str:
-    if FORCE_OFFLINE:
-        return "offline"
     if backend_gemini.available():
         return "gemini"
     if os.environ.get("ANTHROPIC_API_KEY"):
@@ -50,17 +42,8 @@ def model_id() -> str:
 
 
 def cache_model_id() -> str:
-    """캐시 키에 넣을 모델 이름. 오프라인이어도 '원래 쓰였을 모델' 을 돌려준다.
-
-    model_id() 는 오프라인이면 "none" 이라 키가 달라지고, 그러면 미리 받아둔
-    snapshots 가 하나도 안 걸린다. 와이파이가 끊긴 현장에서 쓰라고 만든 폴백이므로
-    여기서는 FORCE_OFFLINE 도, 키가 없는 것도 보지 않는다.
-    보고용 값은 model_id() 가 그대로 정직하게 낸다.
-    """
-    if os.environ.get("ANTHROPIC_API_KEY") and not backend_gemini.available():
-        return os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
-    # 키가 아예 없는 노트북에서도 스냅샷이 걸려야 한다. 기본 백엔드는 Gemini 다.
-    return backend_gemini.DEFAULT_MODEL
+    """Cache identity for the active online model."""
+    return model_id()
 
 
 def backend_status() -> dict:
@@ -71,7 +54,6 @@ def backend_status() -> dict:
         "model": model_id(),
         "prompt_version": prompts.PROMPT_VERSION,
         "cache_entries": cache.count(),
-        "offline_forced": FORCE_OFFLINE,
     }
 
 
@@ -83,22 +65,20 @@ def analyze_page(
         "page_analysis", page.sha1, prompts.PROMPT_VERSION, cache_model_id()
     )
 
+    if active_backend() == "offline":
+        raise RuntimeError("AI 연결이 필요합니다. Gemini API 키와 인터넷 연결을 확인해 주세요.")
+
     hit = cache.cache_get(key)
     if hit is not None:
         hit.page_no = page.page_no
         return hit
 
-    if mode == "offline" or active_backend() == "offline":
-        return heuristics.blocks_from_ocr(page, ocr)
+    if active_backend() == "offline":
+        raise RuntimeError("AI 연결이 필요합니다. Gemini API 키와 인터넷 연결을 확인해 주세요.")
 
-    try:
-        pa = _call_llm(page, ocr)
-        cache.cache_put(key, pa)
-        return pa
-    except Exception as exc:  # noqa: BLE001 - 어떤 실패든 degraded 로 넘긴다
-        pa = heuristics.blocks_from_ocr(page, ocr)
-        pa.warnings.append(f"LLM 호출 실패: {type(exc).__name__}: {exc}")
-        return pa
+    pa = _call_llm(page, ocr)
+    cache.cache_put(key, pa)
+    return pa
 
 
 def _call_llm(page: PageImage, ocr: OcrResult) -> PageAnalysis:

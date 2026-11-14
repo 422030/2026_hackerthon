@@ -50,18 +50,11 @@ def health() -> JSONResponse:
     return JSONResponse(adapter.backend_status())
 
 
-@app.post("/api/offline")
-def set_offline(forced: bool = Form(...)) -> JSONResponse:
-    adapter.set_offline(forced)
-    return JSONResponse(adapter.backend_status())
-
-
 @app.post("/api/jobs")
 async def create_job(
     file: UploadFile,
     page_from: int = Form(1),
     page_to: int = Form(3),
-    mode: str = Form("auto"),
     footnote_mode: str = Form("end"),
 ) -> JSONResponse:
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,7 +72,7 @@ async def create_job(
     opts = RenderOptions(footnote_mode=footnote_mode)  # type: ignore[arg-type]
     threading.Thread(
         target=jobs.run,
-        args=(job_id, str(dest), page_from, capped, mode, opts),
+        args=(job_id, str(dest), page_from, capped, opts),
         daemon=True,
     ).start()
     return JSONResponse(

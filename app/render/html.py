@@ -48,7 +48,7 @@ def _summary(doc: AccessDoc) -> str:
     )
     if doc.degraded_pages:
         pages = ", ".join(str(p) for p in sorted(set(doc.degraded_pages)))
-        text += f" {pages}쪽은 오프라인으로 처리되어 그림 설명이 없습니다."
+        text += f" {pages}쪽은 AI 설명을 생성하지 못했습니다."
     return f'<p class="doc-summary">{esc(text)}</p>'
 
 

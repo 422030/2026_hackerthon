@@ -183,7 +183,7 @@ def retry(job_id: str, opts: RenderOptions | None = None) -> None:
             ocr_result = ocr_mod.run_ocr(page)
 
             st.stage = "analyze"
-            pa = adapter.analyze_page(page, ocr_result, mode="auto")
+            pa = adapter.analyze_page(page, ocr_result)
             pa = guard.cross_check(pa, ocr_result)
 
             if pa.source in RETRY_SOURCES:
@@ -224,7 +224,6 @@ def run(
     path: str,
     page_from: int,
     page_to: int,
-    mode: str = "auto",
     opts: RenderOptions | None = None,
 ) -> None:
     """백그라운드 스레드에서 돌린다."""
@@ -258,7 +257,7 @@ def run(
             ocr_result = ocr_mod.run_ocr(page)
 
             st.stage = "analyze"
-            pa = adapter.analyze_page(page, ocr_result, mode=mode)
+            pa = adapter.analyze_page(page, ocr_result)
             pa = guard.cross_check(pa, ocr_result)
 
             if pa.source in {"degraded", "snapshot"}:
