@@ -61,13 +61,18 @@ def main() -> int:
     checks.append(("제목 레벨 정규화", ok_levels, f"{levels}"))
 
     html = html_render.to_html(doc, RenderOptions())
-    for tag in ["<h2", "<figure", "<table", 'role="math"', 'id="fn1"', "AI 설명 시작"]:
+    for tag in ["<h2", "<figure", "<table", 'role="math"', "AI 설명 시작"]:
         checks.append((f"HTML {tag}", tag in html, ""))
+
+    # 각주는 인식해서 전역 번호까지 매기되 사용자 출력에는 내지 않는다.
+    no_fn = 'id="fn1"' not in html and "[^1]" not in html
+    checks.append(("HTML 각주 숨김", no_fn, ""))
 
     segs = speech_render.to_speech_text(doc)
     checks.append(("음성 조각 생성", len(segs) > 8, f"{len(segs)}개"))
     kinds = {s.kind for s in segs}
     checks.append(("figure 조각 존재", "figure" in kinds, f"{sorted(kinds)}"))
+    checks.append(("음성 각주 숨김", "footnote" not in kinds, f"{sorted(kinds)}"))
 
     md = md_render.to_markdown(doc)
     checks.append(("마크다운 생성", len(md) > 200, f"{len(md)}자"))
