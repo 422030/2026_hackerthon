@@ -67,8 +67,40 @@ def _power(base: str, exponent: str) -> str:
     return f" {_math_atom(base)}의 {suffix} "
 
 
+ASYMPTOTIC_RE = re.compile(
+    r"(?<![A-Za-z])(?P<kind>O|Ω|Θ|\\Omega|\\Theta|\\mathcal\{O\})\s*"
+    r"\(\s*(?P<expr>[0-9A-Za-z^{}⁰¹²³⁴⁵⁶⁷⁸⁹\s]+)\s*\)"
+)
+INLINE_MONOMIAL_RE = re.compile(
+    r"(?<![A-Za-z0-9])(?P<coefficient>[2-9])\s*(?P<variable>[nNxX])"
+    r"(?=(?:은|는|이|가|을|를|과|와|보다|에|도|만|의|[ ,.;:)]|$))"
+)
+MATH_N_PARTICLE_RE = re.compile(r"(?<![A-Za-z])([nNxX])(?=(?:은|는|이|가|을|를|과|와|보다|에|도|만|의))")
+
+
+def _read_asymptotic(match: re.Match[str]) -> str:
+    names = {
+        "O": "빅오", "Ω": "빅오메가", "Θ": "빅세타",
+        r"\Omega": "빅오메가", r"\Theta": "빅세타",
+        r"\mathcal{O}": "빅오",
+    }
+    inner = normalize_math_speech(match.group("expr"))
+    inner = re.sub(r"(?<![A-Za-z])([nNxX])(?=\b|$)", lambda m: _math_atom(m[1]), inner)
+    inner = INLINE_MONOMIAL_RE.sub(
+        lambda m: f"{m['coefficient']} {_math_atom(m['variable'])}", inner
+    )
+    return f" {names[match.group('kind')]} {inner.strip()} "
+
+
 def normalize_math_speech(text: str) -> str:
     """Convert unambiguous simple math notation to Korean speech."""
+    text = ASYMPTOTIC_RE.sub(_read_asymptotic, text)
+    text = text.replace(r"\in", " ∈ ").replace("∈", " 에 속한다 ")
+    text = text.replace("→", " 따라서 ")
+    text = INLINE_MONOMIAL_RE.sub(
+        lambda m: f" {m['coefficient']} {_math_atom(m['variable'])} ", text
+    )
+    text = MATH_N_PARTICLE_RE.sub(lambda m: f"{_math_atom(m[1])}", text)
     text = FRAC_RE.sub(lambda m: f" {_math_atom(m[2])}분의 {_math_atom(m[1])} ", text)
     text = SQRT_RE.sub(lambda m: f" 루트 {_math_atom(m[1] or m[2])} ", text)
     text = POWER_RE.sub(lambda m: _power(m[1], m[2]), text)
