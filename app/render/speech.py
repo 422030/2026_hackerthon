@@ -34,7 +34,7 @@ FOOTNOTE_RE = re.compile(r"\[\^(\d+)\]")
 
 
 def speak_text(s: str) -> str:
-    out = FOOTNOTE_RE.sub(r" 각주 \1 ", s or "")
+    out = FOOTNOTE_RE.sub("", s or "")
     for k, v in LEXICON.items():
         out = out.replace(k, f" {v} ")
     return re.sub(r"\s+", " ", out).strip()
@@ -99,9 +99,5 @@ def to_speech_text(
             add(b.id, "table", f"표. {b.alt_short or b.text}", 200)
             for row in b.table_grid or []:
                 add(b.id, "table", ", ".join(c.text for c in row if c.text), 100)
-
-    if opts.footnote_mode == "end":
-        for n, fn in sorted(fn_by_num.items()):
-            add(fn.id, "footnote", f"각주 {n}. {fn.text}", 200)
 
     return segs
